@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Falou ou Fudeu</title>
+
+<!-- Fonte Baloo 2 -->
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg: #FFF3E0;
+  --btn: #29B6F6;
+  --btn-pressed: #B0BEC5;
+  --accent-dark: #37474F;
+  --text-on-btn: #ffffff;
+  --gap: 1vmin;
+  --btn-size: min(18vw, 16vmin);
+}
+
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{
+  height:100dvh;
+  background: var(--bg);
+  font-family:"Baloo 2", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  display:grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "top top top"
+    "left center right"
+    "bottom bottom bottom";
+  gap: var(--gap);
+  padding: calc(var(--gap));
+  position: relative;
+}
+
+#top{grid-area:top; display:flex; gap:calc(var(--gap)); align-items:center; justify-content:space-between; padding:0 var(--gap);}
+#left{grid-area:left; display:flex; flex-direction:column; gap:var(--gap); justify-content:space-between; padding:0 var(--gap);}
+#right{grid-area:right; display:flex; flex-direction:column; gap:var(--gap); justify-content:space-between; padding:0 var(--gap);}
+#bottom{grid-area:bottom; display:flex; gap:var(--gap); align-items:center; justify-content:space-between; padding:0 var(--gap);}
+#center{grid-area:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3vmin; pointer-events:none;}
+
+.letter{
+  --size: var(--btn-size);
+  width: var(--size);
+  aspect-ratio: 1/1;
+  background: linear-gradient(180deg, var(--btn), color-mix(in srgb, var(--btn) 85%, white 15%));
+  color: var(--text-on-btn);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(33,33,33,0.12);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  font-size: calc(var(--size) * 0.42);
+  cursor:pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, opacity 140ms;
+  pointer-events:auto;
+  user-select:none;
+}
+.letter:active{ transform: scale(0.98); }
+.letter[disabled]{
+  background: var(--btn-pressed);
+  box-shadow: none;
+  transform: scale(0.95);
+  color: #ffffff;
+  cursor: default;
+  opacity: 0.95;
+}
+
+#theme{
+  background: var(--accent-dark);
+  color: var(--text-on-btn);
+  padding: 1.2vmin 4vmin;
+  border-radius: 12px;
+  font-size: 4.2vmin;
+  font-weight:700;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  pointer-events:auto;
+  user-select:none;
+  text-align:center;
+}
+
+#timerBtn{
+  width: min(44vmin, 40vw);
+  height: min(44vmin, 40vw);
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--btn), color-mix(in srgb, var(--btn) 85%, white 15%));
+  color: var(--text-on-btn);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: 8vmin;
+  font-weight:700;
+  border:none;
+  box-shadow: 0 14px 30px rgba(33,33,33,0.14);
+  cursor:pointer;
+  transition: transform 150ms ease, box-shadow 150ms;
+  pointer-events:auto;
+}
+
+#timerBtn:active{ transform: scale(0.98); }
+
+/* Overlay Game Over */
+#gameOver{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  z-index: 99999; /* MUITO acima de tudo */
+  text-align: center;
+  padding: 5vmin;
+}
+
+.gameOverText{
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  font-size: 10vmin;
+  margin-bottom: 4vmin;
+}
+
+#retryBtn{
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
+  font-size: 5vmin;
+  padding: 2vmin 6vmin;
+  background: #29B6F6;
+  color: #fff;
+  border:none;
+  border-radius: 12px;
+  cursor:pointer;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+#retryBtn:active{
+  transform: scale(0.92);
+  box-shadow:none;
+}
+
+@media (min-width:700px){
+  :root{ --btn-size: min(12vmin, 120px); }
+  .letter{ font-size: calc(var(--btn-size) * 0.38); }
+  #timerBtn{ font-size: 5.8vmin; width:260px; height:260px; }
+}
+@media (max-height:520px){
+  :root{ --btn-size: min(14vmin, 14vw); }
+}
+</style>
+</head>
+<body>
+
+<div id="top">
+  <button class="letter" data-letter="A">A</button>
+  <button class="letter" data-letter="B">B</button>
+  <button class="letter" data-letter="C">C</button>
+  <button class="letter" data-letter="D">D</button>
+</div>
+
+<div id="left">
+  <button class="letter" data-letter="Z">Z</button>
+  <button class="letter" data-letter="X">X</button>
+  <button class="letter" data-letter="V">V</button>
+  <button class="letter" data-letter="U">U</button>
+  <button class="letter" data-letter="T">T</button>
+  <button class="letter" data-letter="S">S</button>
+  <button class="letter" data-letter="R">R</button>
+</div>
+
+<div id="right">
+  <button class="letter" data-letter="E">E</button>
+  <button class="letter" data-letter="F">F</button>
+  <button class="letter" data-letter="G">G</button>
+  <button class="letter" data-letter="H">H</button>
+  <button class="letter" data-letter="I">I</button>
+  <button class="letter" data-letter="J">J</button>
+  <button class="letter" data-letter="L">L</button>
+</div>
+
+<div id="bottom">
+  <button class="letter" data-letter="Q">Q</button>
+  <button class="letter" data-letter="P">P</button>
+  <button class="letter" data-letter="O">O</button>
+  <button class="letter" data-letter="N">N</button>
+  <button class="letter" data-letter="M">M</button>
+</div>
+
+<div id="center">
+  <div id="theme">Tema</div>
+  <button id="timerBtn">20</button>
+</div>
+
+<!-- Overlay Game Over -->
+<div id="gameOver">
+  <div class="gameOverText">SE FUDEU</div>
+  <button id="retryBtn">Jogar novamente</button>
+</div>
+
+<script>
+(() => {
+  const THEMES = ["Nome","Animal","Fruta","CEP","Objeto","TV","Banda","Profissão","Jogo","Celebridade","Super-heroi","Marca","Personagem","MSE"];
+  const letterButtons = Array.from(document.querySelectorAll('.letter'));
+  const themeEl = document.getElementById('theme');
+  const timerBtn = document.getElementById('timerBtn');
+  const overlay = document.getElementById('gameOver');
+  const retryBtn = document.getElementById('retryBtn');
+
+  let timeLeft = 20;
+  let intervalId = null;
+  let timerRunning = false;
+
+  function pickTheme(){ return THEMES[Math.floor(Math.random() * THEMES.length)]; }
+  function renderTimer(){ timerBtn.textContent = String(timeLeft); }
+
+  function startTimer(){
+    if(intervalId) return;
+    timerRunning = true;
+    intervalId = setInterval(() => {
+      timeLeft--;
+      renderTimer();
+      if(timeLeft <= 0){
+        clearInterval(intervalId);
+        intervalId=null;
+        timerRunning=false;
+        showGameOver();
+      }
+    },1000);
+  }
+
+  function stopTimer(){
+    if(intervalId){ clearInterval(intervalId); intervalId=null; }
+    timerRunning=false;
+  }
+
+  function showGameOver(){
+    overlay.style.display = "flex";
+    // Bloquear cliques no resto do jogo
+    document.querySelectorAll('#top, #left, #right, #bottom, #center').forEach(el=>{
+      el.style.pointerEvents = 'none';
+    });
+  }
+
+  function resetGame(autoStart=false){
+    letterButtons.forEach(btn => { 
+      btn.disabled=false; 
+      btn.setAttribute('aria-pressed','false'); 
+    });
+    overlay.style.display="none";
+    // Reativar cliques
+    document.querySelectorAll('#top, #left, #right, #bottom, #center').forEach(el=>{
+      el.style.pointerEvents = 'auto';
+    });
+    timeLeft=20;
+    renderTimer();
+    themeEl.textContent = pickTheme();
+    stopTimer();
+    if(autoStart) startTimer();
+  }
+
+  function onLetterClick(e){
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
+    btn.disabled=true;
+    btn.setAttribute('aria-pressed','true');
+    timeLeft=20;
+    renderTimer();
+    if(!timerRunning) startTimer();
+  }
+
+  function onCenterClick(){ 
+    if(overlay.style.display !== "flex"){ resetGame(true); } 
+  }
+
+  letterButtons.forEach(btn => btn.addEventListener('click', onLetterClick));
+  timerBtn.addEventListener('click', onCenterClick);
+  themeEl.addEventListener('click', onCenterClick);
+  retryBtn.addEventListener('click', () => { resetGame(true); });
+
+  resetGame(false);
+  renderTimer();
+})();
+</script>
+
+</body>
+</html>
