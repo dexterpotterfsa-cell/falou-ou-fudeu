@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Falou ou Fudeu - Multiplayer</title>
+
+<!-- Fonte Baloo 2 -->
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg: #FFF3E0;
+  --btn: #29B6F6;
+  --btn-pressed: #B0BEC5;
+  --accent-dark: #37474F;
+  --text-on-btn: #ffffff;
+  --gap: 1vmin;
+  --btn-size: min(18vw, 16vmin);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;font-family:"Baloo 2", system-ui, -apple-system, "Segoe UI", Roboto, Arial;}
+body{
+  height:100dvh;
+  background: var(--bg);
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  grid-template-rows:auto 1fr auto;
+  grid-template-areas:
+    "top top top"
+    "left center right"
+    "bottom bottom bottom";
+  gap: var(--gap);
+  padding: calc(var(--gap));
+  position: relative;
+}
+
+/* Moldura do tabuleiro */
+#top, #bottom{display:flex; gap:var(--gap); justify-content:space-between; align-items:center; padding:0 var(--gap);}
+#left, #right{display:flex; flex-direction:column; gap:var(--gap); justify-content:space-between; padding:0 var(--gap);}
+#center{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3vmin; pointer-events:none;}
+
+/* Letras */
+.letter{
+  --size: var(--btn-size);
+  width: var(--size);
+  aspect-ratio:1/1;
+  background: linear-gradient(180deg, var(--btn), color-mix(in srgb, var(--btn) 85%, white 15%));
+  color: var(--text-on-btn);
+  border:none;
+  border-radius:12px;
+  box-shadow:0 8px 18px rgba(33,33,33,0.12);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  font-size:calc(var(--size) * 0.42);
+  cursor:pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, opacity 140ms;
+  pointer-events:auto;
+  user-select:none;
+}
+.letter:active{transform:scale(0.98);}
+.letter[disabled]{background:var(--btn-pressed);box-shadow:none;transform:scale(0.95);color:#fff;cursor:default;opacity:0.95;}
+
+/* Tema e timer */
+#theme{
+  background: var(--accent-dark);
+  color: var(--text-on-btn);
+  padding:1.2vmin 4vmin;
+  border-radius:12px;
+  font-size:4.2vmin;
+  font-weight:700;
+  box-shadow:0 8px 18px rgba(0,0,0,0.12);
+  pointer-events:auto;
+  user-select:none;
+  text-align:center;
+}
+#timerBtn{
+  width:min(44vmin,40vw);
+  height:min(44vmin,40vw);
+  border-radius:50%;
+  background: linear-gradient(180deg, var(--btn), color-mix(in srgb, var(--btn) 85%, white 15%));
+  color: var(--text-on-btn);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:8vmin;
+  font-weight:700;
+  border:none;
+  box-shadow:0 14px 30px rgba(33,33,33,0.14);
+  cursor:pointer;
+  transition:transform 150ms ease, box-shadow 150ms;
+  pointer-events:auto;
+  z-index:1;
+}
+#timerBtn:active{transform:scale(0.98);}
+
+/* Overlay Game Over */
+#gameOver{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  z-index: 9999;
+  text-align: center;
+  padding: 5vmin;
+}
+.gameOverText{
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  font-size: 10vmin;
+  margin-bottom:4vmin;
+}
+#retryBtn{
+  font-family: 'Baloo 2', sans-serif;
+  font-weight:700;
+  font-size:5vmin;
+  padding:2vmin 6vmin;
+  background:#29B6F6;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  box-shadow:0 6px 14px rgba(0,0,0,0.2);
+  transition:transform 150ms ease, box-shadow 150ms ease;
+}
+#retryBtn:active{transform:scale(0.92); box-shadow:none;}
+
+/* Tela inicial e cadastro de jogadores */
+.overlayScreen{
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content:center;
+  align-items:center;
+  z-index: 10000;
+  gap: 4vmin;
+  padding:5vmin;
+}
+.overlayScreen input, .overlayScreen select{
+  font-size:5vmin;
+  padding:2vmin;
+  border-radius:8px;
+  border:1px solid #ccc;
+  text-align:center;
+  width:60vw;
+  max-width:300px;
+}
+.overlayScreen button{
+  font-family:'Baloo 2', sans-serif;
+  font-weight:700;
+  font-size:5vmin;
+  padding:2vmin 6vmin;
+  background:#29B6F6;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  box-shadow:0 6px 14px rgba(0,0,0,0.2);
+  transition:transform 150ms ease, box-shadow 150ms ease;
+}
+.overlayScreen button:active{transform:scale(0.92); box-shadow:none;}
+</style>
+</head>
+<body>
+
+<!-- Tela inicial -->
+<div id="startScreen" class="overlayScreen">
+  <div style="font-size:7vmin;font-weight:700;color:#29B6F6;">Falou ou Fudeu</div>
+  <label>Numero de jogadores
+    <select id="numPlayers">
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+    </select>
+  </label>
+  <label>Numero de rodadas
+    <select id="numRounds">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3" selected>3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+    </select>
+  </label>
+  <button id="startBtn">Próximo</button>
+</div>
+
+<!-- Tela de cadastro de nomes -->
+<div id="nameScreen" class="overlayScreen" style="display:none;">
+  <div id="namePrompt" style="font-size:6vmin;font-weight:700;color:#29B6F6;">Nome do jogador 1</div>
+  <input type="text" id="playerNameInput" placeholder="Digite o nome" />
+  <button id="nextPlayerBtn">Próximo</button>
+</div>
+
+<!-- Moldura do tabuleiro -->
+<div id="top">
+  <button class="letter" data-letter="A">A</button>
+  <button class="letter" data-letter="B">B</button>
+  <button class="letter" data-letter="C">C</button>
+  <button class="letter" data-letter="D">D</button>
+</div>
+<div id="left">
+  <button class="letter" data-letter="Z">Z</button>
+  <button class="letter" data-letter="X">X</button>
+  <button class="letter" data-letter="V">V</button>
+  <button class="letter" data-letter="U">U</button>
+  <button class="letter" data-letter="T">T</button>
+  <button class="letter" data-letter="S">S</button>
+  <button class="letter" data-letter="R">R</button>
+</div>
+<div id="right">
+  <button class="letter" data-letter="E">E</button>
+  <button class="letter" data-letter="F">F</button>
+  <button class="letter" data-letter="G">G</button>
+  <button class="letter" data-letter="H">H</button>
+  <button class="letter" data-letter="I">I</button>
+  <button class="letter" data-letter="J">J</button>
+  <button class="letter" data-letter="L">L</button>
+</div>
+<div id="bottom">
+  <button class="letter" data-letter="Q">Q</button>
+  <button class="letter" data-letter="P">P</button>
+  <button class="letter" data-letter="O">O</button>
+  <button class="letter" data-letter="N">N</button>
+  <button class="letter" data-letter="M">M</button>
+</div>
+<div id="center">
+  <div id="theme">Tema</div>
+  <button id="timerBtn">20</button>
+</div>
+
+<!-- Overlay Game Over -->
+<div id="gameOver">
+  <div class="gameOverText">SE FUDEU</div>
+  <button id="retryBtn">Jogar novamente</button>
+</div>
+
+<!-- Overlay placar final -->
+<div id="scoreScreen" class="overlayScreen" style="display:none;">
+  <div style="font-size:7vmin;font-weight:700;color:#29B6F6;margin-bottom:3vmin;">Placar Final</div>
+  <div id="scoreList" style="font-size:5vmin;color:#37474F;margin-bottom:3vmin;"></div>
+  <button id="restartBtn">Jogar Novamente</button>
+</div>
+
+<script>
+(() => {
+  const THEMES = ["Nome","Animal","Fruta","CEP","Objeto","TV","Banda","Profissão","Jogo","Celebridade","Super-heroi","Marca","Personagem","MSE"];
+  const letterButtons = Array.from(document.querySelectorAll('.letter'));
+  const themeEl = document.getElementById('theme');
+  const timerBtn = document.getElementById('timerBtn');
+  const overlay = document.getElementById('gameOver');
+  const retryBtn = document.getElementById('retryBtn');
+
+  const startScreen = document.getElementById('startScreen');
+  const startBtn = document.getElementById('startBtn');
+  const numPlayersSel = document.getElementById('numPlayers');
+  const numRoundsSel = document.getElementById('numRounds');
+
+  const nameScreen = document.getElementById('nameScreen');
+  const namePrompt = document.getElementById('namePrompt');
+  const playerNameInput = document.getElementById('playerNameInput');
+  const nextPlayerBtn = document.getElementById('nextPlayerBtn');
+
+  const scoreScreen = document.getElementById('scoreScreen');
+  const scoreList = document.getElementById('scoreList');
+  const restartBtn = document.getElementById('restartBtn');
+
+  let players = [];
+  let currentPlayerIndex = 0;
+  let currentRound = 1;
+  let totalRounds = 1;
+  let numPlayers = 2;
+  let timeLeft = 20;
+  let intervalId = null;
+  let timerRunning = false;
+
+  // Funções utilitárias
+  function pickTheme(){ return THEMES[Math.floor(Math.random()*THEMES.length)]; }
+  function renderTimer(){ timerBtn.textContent = String(timeLeft); }
+
+  function startTimer(){
+    if(intervalId) return;
+    timerRunning = true;
+    intervalId = setInterval(() => {
+      timeLeft--;
+      renderTimer();
+      if(timeLeft <=0){
+        clearInterval(intervalId); intervalId=null; timerRunning=false;
+        overlay.style.display = "flex";
+        // Pontua jogador anterior
+        let prevPlayer = (currentPlayerIndex-1+players.length)%players.length;
+        players[prevPlayer].pontos++;
+        nextTurn();
+      }
+    },1000);
+  }
+
+  function stopTimer(){ if(intervalId){clearInterval(intervalId); intervalId=null;} timerRunning=false; }
+
+  function resetBoard(){
+    letterButtons.forEach(btn=>{btn.disabled=false;btn.setAttribute('aria-pressed','false');});
+    overlay.style.display="none";
+    timeLeft=20; renderTimer();
+    themeEl.textContent = pickTheme();
+    stopTimer();
+  }
+
+  function nextTurn(){
+    currentPlayerIndex = (currentPlayerIndex+1)%players.length;
+    if(currentPlayerIndex===0){
+      currentRound++;
+      if(currentRound>totalRounds){
+        // Fim do jogo
+        showFinalScore();
+        return;
+      }
+    }
+    resetBoard();
+    startTimer();
+  }
+
+  function onLetterClick(e){
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
+    btn.disabled=true;
+    btn.setAttribute('aria-pressed','true');
+    timeLeft=20;
+    renderTimer();
+    if(!timerRunning) startTimer();
+    nextTurn();
+  }
+
+  function onCenterClick(){ resetBoard(); startTimer(); }
+
+  function showFinalScore(){
+    scoreScreen.style.display="flex";
+    let sorted = [...players].sort((a,b)=>b.pontos-a.pontos);
+    scoreList.innerHTML = sorted.map(p=>`${p.nome}: ${p.pontos}`).join("<br>");
+  }
+
+  // Eventos gameplay
+  letterButtons.forEach(btn=>btn.addEventListener('click', onLetterClick));
+  timerBtn.addEventListener('click', onCenterClick);
+  themeEl.addEventListener('click', onCenterClick);
+  retryBtn.addEventListener('click', () => { resetGame(); });
+
+  // Tela inicial
+  startBtn.addEventListener('click', ()=>{
+    numPlayers = parseInt(numPlayersSel.value);
+    totalRounds = parseInt(numRoundsSel.value);
+    players=[];
+    currentPlayerIndex=0;
+    currentRound=1;
+    startScreen.style.display="none";
+    nameScreen.style.display="flex";
+    namePrompt.textContent=`Nome do jogador 1`;
+    playerNameInput.value="";
+    playerNameInput.focus();
+  });
+
+  nextPlayerBtn.addEventListener('click', ()=>{
+    const name = playerNameInput.value.trim();
+    if(!name){ alert("Digite um nome"); return; }
+    players.push({nome:name,pontos:0});
+    if(players.length<numPlayers){
+      namePrompt.textContent=`Nome do jogador ${players.length+1}`;
+      playerNameInput.value="";
+      playerNameInput.focus();
+    } else {
+      // Começa jogo
+      nameScreen.style.display="none";
+      resetBoard();
+      startTimer();
+    }
+  });
+
+  restartBtn.addEventListener('click', ()=>{
+    scoreScreen.style.display="none";
+    startScreen.style.display="flex";
+  });
+
+  function resetGame(){
+    overlay.style.display="none";
+    currentPlayerIndex=0;
+    currentRound=1;
+    players.forEach(p=>p.pontos=0);
+    resetBoard();
+    startScreen.style.display="flex";
+  }
+
+})();
+</script>
+</body>
+</html>
